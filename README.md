@@ -1,212 +1,281 @@
-# ☸️ Kubernetes
-
-
----
-
-## 📦 Instalação
-
-### Ubuntu / Debian
-
-```bash
-sudo apt update
-sudo apt install -y apt-transport-https ca-certificates curl
-```
-
-```bash
-curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-```
-
-```bash
-echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-```
-
-```bash
-sudo apt update
-sudo apt install -y kubectl
-```
+# ☸️ Kubernetes — Guia de Sobrevivência (SRE Jr)
 
 ---
 
-## 🧱 Conceitos Básicos
+## 📌 Índice
 
-### Cluster
-
-* Conjunto de máquinas que executam containers
-
-### Node
-
-* Máquina (VM ou física) dentro do cluster
-
-### Pod
-
-* Menor unidade do Kubernetes
-* Pode conter 1 ou mais containers
-
-### Deployment
-
-* Gerencia réplicas e atualizações de Pods
-
-### Service
-
-* Expõe Pods para rede interna ou externa
+* [O que é Kubernetes](#-o-que-é-kubernetes)
+* [Principais Componentes](#-principais-componentes)
+* [Arquitetura Básica](#-arquitetura-básica)
+* [kubectl — Comandos Essenciais](#-kubectl--comandos-essenciais)
+* [Pods](#-pods)
+* [Deployments](#-deployments)
+* [Services (Portas e Acesso)](#-services-portas-e-acesso)
+* [ConfigMap e Secret](#-configmap-e-secret)
+* [Logs e Debug](#-logs-e-debug)
+* [Escalabilidade](#-escalabilidade)
+* [Ciclo de Vida de uma Aplicação](#-ciclo-de-vida-de-uma-aplicação)
+* [Mini Lab Mental (Entrevista)](#-mini-lab-mental-entrevista)
 
 ---
 
-## 🚀 Comandos Essenciais
+## 🧠 O que é Kubernetes
 
-### Verificar cluster
+Kubernetes (K8s) é um **orquestrador de containers**.
+Ele gerencia:
 
-```bash
-kubectl cluster-info
-```
+* Deploy
+* Escala
+* Comunicação
+* Recuperação automática (self-healing)
 
-### Listar nodes
+👉 Docker roda containers. **Kubernetes gerencia containers em produção**.
+
+---
+
+## 🧩 Principais Componentes
+
+* **Cluster** → conjunto de máquinas
+* **Node** → máquina (VM ou física)
+* **Pod** → menor unidade (1 ou mais containers)
+* **Deployment** → controla Pods
+* **Service** → expõe Pods
+* **ConfigMap / Secret** → configuração
+
+---
+
+## 🏗️ Arquitetura Básica
+
+* **Control Plane** (decide)
+
+  * API Server
+  * Scheduler
+  * Controller Manager
+
+* **Worker Node** (executa)
+
+  * kubelet
+  * kube-proxy
+  * container runtime
+
+---
+
+## 🧰 kubectl — Comandos Essenciais
 
 ```bash
 kubectl get nodes
+kubectl get pods
+kubectl get deployments
+kubectl get services
 ```
 
-### Listar pods
+```bash
+kubectl describe pod <pod>
+kubectl delete pod <pod>
+```
+
+---
+
+## 📦 Pods
+
+Pod = **container + contexto**
 
 ```bash
 kubectl get pods
 ```
 
-### Listar pods em todos os namespaces
+Criar Pod simples:
 
 ```bash
-kubectl get pods -A
+kubectl run nginx --image=nginx
+```
+
+⚠️ Em produção, **não se usa Pod direto**, e sim Deployment.
+
+---
+
+## 🚀 Deployments
+
+Deployment controla:
+
+* Réplicas
+* Atualizações
+* Rollback
+
+```bash
+kubectl create deployment web --image=nginx
+```
+
+```bash
+kubectl get deployments
+kubectl get pods
 ```
 
 ---
 
-## 📄 Trabalhando com YAML
+## 🌐 Services (Portas e Acesso)
 
-### Exemplo de Pod
+Service conecta **rede → Pods**.
 
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: nginx-pod
-spec:
-  containers:
-    - name: nginx
-      image: nginx:latest
-```
+Tipos principais:
 
-### Criar recurso
+* ClusterIP (interno)
+* NodePort
+* LoadBalancer
+
+Expor Deployment:
 
 ```bash
-kubectl apply -f pod.yaml
+kubectl expose deployment web --type=NodePort --port=80
 ```
 
-### Remover recurso
-
 ```bash
-kubectl delete -f pod.yaml
+kubectl get services
 ```
 
 ---
 
-## 📦 Deployment
+## 🔐 ConfigMap e Secret
 
-### Exemplo de Deployment
+Configuração desacoplada da aplicação.
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx-deployment
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: nginx
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:latest
-```
-
-### Criar deployment
+ConfigMap:
 
 ```bash
-kubectl apply -f deployment.yaml
+kubectl create configmap app-config --from-literal=ENV=prod
+```
+
+Secret:
+
+```bash
+kubectl create secret generic app-secret --from-literal=PASSWORD=123
 ```
 
 ---
 
-## 🌐 Service
+## 📜 Logs e Debug
 
-### Exemplo NodePort
+Logs de Pod:
 
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx-service
-spec:
-  type: NodePort
-  selector:
-    app: nginx
-  ports:
-    - port: 80
-      targetPort: 80
-      nodePort: 30007
+```bash
+kubectl logs <pod>
+```
+
+Logs contínuos:
+
+```bash
+kubectl logs -f <pod>
+```
+
+Entrar no container:
+
+```bash
+kubectl exec -it <pod> -- sh
 ```
 
 ---
 
-## 📊 Logs e Debug
+## 📈 Escalabilidade
 
-### Logs de um Pod
+Escalar manualmente:
 
 ```bash
-kubectl logs nginx-pod
+kubectl scale deployment web --replicas=3
 ```
 
-### Logs em tempo real
+Ver estado:
 
 ```bash
-kubectl logs -f nginx-pod
-```
-
-### Acessar container
-
-```bash
-kubectl exec -it nginx-pod -- sh
+kubectl get pods
 ```
 
 ---
 
-## 🧹 Limpeza
+## 🔄 Ciclo de Vida de uma Aplicação
 
-### Deletar pod
+1. Criar Deployment
+2. Kubernetes cria Pods
+3. Service expõe Pods
+4. Se Pod cair → outro sobe
+5. Scale ajusta carga
 
-```bash
-kubectl delete pod nginx-pod
-```
+👉 **Self-healing automático**
 
-### Deletar tudo do namespace atual
+---
 
-```bash
-kubectl delete all --all
+## 🧪 Mini Lab Mental (Entrevista)
+
+Pergunta comum:
+
+> O que acontece se um Pod morrer?
+
+Resposta esperada:
+
+* Deployment detecta
+* Novo Pod é criado
+* Service redireciona tráfego
+* Usuário não percebe
+
+---
+
+## 🎯 Visão SRE Jr
+
+Você **não precisa decorar tudo**, mas precisa:
+
+* Entender fluxo
+* Saber debugar
+* Saber onde olhar logs
+* Entender escala e falhas
+
+👉 Isso já cobre **80% do dia a dia SRE Jr**.
+
+---
+
+## 🆚 Docker vs Kubernetes (Visão Prática)
+
+```text
+Docker           → Executa containers
+Docker Compose   → Orquestra containers em uma máquina
+Kubernetes       → Orquestra containers em várias máquinas (cluster)
 ```
 
 ---
 
-## 🎯 O que isso cobre para SRE Jr
+## 🚨 Problemas Comuns em Produção (SRE Reality Check)
 
-✔ Conceitos fundamentais
-✔ Leitura de YAML
-✔ Deploy de aplicações
-✔ Debug básico
-✔ Logs
-✔ Networking simples
+```text
+CrashLoopBackOff        → Aplicação quebrando ao iniciar
+ImagePullBackOff       → Erro ao baixar imagem
+Pod Running mas app off→ Porta errada ou app não escutando
+Service sem resposta   → Selector errado ou Pod não pronto
+```
 
-👉 Com isso + Docker + Linux, você **tem a base esperada para Analista SRE Jr**.
+---
+
+## 🛠️ Fluxo Rápido de Troubleshooting
+
+```bash
+# Ver estado geral
+kubectl get pods
+
+# Ver detalhes do pod
+kubectl describe pod <pod>
+
+# Ver logs
+kubectl logs <pod>
+
+# Entrar no container
+kubectl exec -it <pod> -- sh
+```
+
+---
+
+## 📌 Dicas de Sobrevivência (Dia a Dia SRE Jr)
+
+```text
+- Sempre comece com kubectl get
+- Logs antes de entrar no container
+- Service quebrado quase sempre é selector
+- Pod reiniciando = olhar logs
+- Deployment não sobe = imagem ou env
+```
