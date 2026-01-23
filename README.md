@@ -1,207 +1,192 @@
-📘 Guia Kubernetes para SRE
+📘 Guia Kubernetes para SRE Jr
 
-📑 Sumário
+(Em construção — foco total em uso prático no dia a dia)
 
-Kubernetes Básico → Introdução à plataforma, conceitos fundamentais (Cluster, Node, Pod, Control Plane, kubectl).
+☸️ Conteúdo 1 — Kubernetes Básico (Sobrevivência)
+📌 O que é Kubernetes
 
-Pods → Menor unidade do Kubernetes, encapsula containers. YAML básico e comandos para criar, listar e remover.
+Kubernetes (K8s) é um orquestrador de containers.
+Ele gerencia deploy, escala, restart e comunicação entre containers automaticamente.
 
-Deployments → Controlam réplicas de Pods e atualizações. Exemplo de Deployment com escalabilidade e rollout.
+👉 Docker roda container
+👉 Kubernetes gerencia vários containers em produção
 
-Services → Exposição de Pods. Tipos: ClusterIP (interno), NodePort (externo), LoadBalancer (balanceador).
+🧠 Conceitos Fundamentais (ESSENCIAL)
+🔹 Cluster
 
-ConfigMaps & Secrets → Armazenamento de configurações e dados sensíveis. Exemplos de YAML para uso em aplicações.
+Conjunto de máquinas que rodam Kubernetes.
 
-Volumes & Persistent Volumes → Persistência de dados com PVC (PersistentVolumeClaim).
+🔹 Node
 
-Namespaces → Organização de recursos em ambientes separados (dev, prod, etc.).
+Máquina (VM ou física) dentro do cluster.
 
-kubectl Comandos Essenciais → Tabela de comandos para criar, listar, escalar, logs e execuções.
+🔹 Pod
 
-Helm → Gerenciador de pacotes para Kubernetes. Comandos básicos para instalar, listar e remover aplicações.
+Menor unidade do Kubernetes
 
-🐳 Conteúdo 1 — Kubernetes Básico (Sobrevivência)
+Um pod pode ter 1 ou mais containers
 
-📌 O que é KubernetesKubernetes é uma plataforma de orquestração de containers que automatiza a implantação, o gerenciamento e a escalabilidade de aplicações em clusters.
+Containers do mesmo pod compartilham:
 
-🧠 Conceitos Fundamentais
+rede
 
-Cluster → conjunto de máquinas (nós) que executam aplicações.
+volume
 
-Node → máquina física ou virtual que roda os containers.
+IP
 
-Pod → menor unidade do Kubernetes, encapsula um ou mais containers.
+Container < Pod < Node < Cluster
 
-Control Plane → gerencia o estado desejado do cluster.
+🔹 Deployment
 
-kubectl → CLI para interagir com o cluster.
+Define como os pods devem rodar
 
-📦 Instalação do kubectl (Ubuntu/Debian)
+Controla:
 
-sudo apt update
-sudo apt install -y kubectl
+quantidade de réplicas
 
-🧱 Conteúdo 2 — Pods
+atualização
 
-📄 Pod básico
+rollback
 
-apiVersion: v1
-kind: Pod
-metadata:
-  name: meu-pod
-spec:
-  containers:
-  - name: nginx
-    image: nginx:latest
-    ports:
-    - containerPort: 80
+🔹 Service
 
-📌 Comandos úteis
+Expõe os pods para acesso interno ou externo
 
+Resolve o problema de IP dinâmico dos pods
+
+🛠️ Conteúdo 2 — kubectl (Ferramenta Principal)
+Ver status do cluster
+kubectl cluster-info
+
+Ver nodes
+kubectl get nodes
+
+📦 Conteúdo 3 — Pods
+Listar pods
 kubectl get pods
-kubectl describe pod meu-pod
-kubectl delete pod meu-pod
 
-▶️ Conteúdo 3 — Deployments
 
-📄 Deployment com réplicas
+Todos os namespaces:
 
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx-deployment
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: nginx
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:1.21
-        ports:
-        - containerPort: 80
+kubectl get pods -A
 
-📌 Comandos
+Descrever pod (debug)
+kubectl describe pod nome-do-pod
 
-kubectl apply -f deployment.yaml
-kubectl get deployments
-kubectl scale deployment nginx-deployment --replicas=5
-kubectl rollout status deployment nginx-deployment
 
-🌐 Conteúdo 4 — Services
+👉 Muito usado quando pod não sobe.
 
-📄 Service NodePort
+Logs de pod
+kubectl logs nome-do-pod
 
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx-service
-spec:
-  selector:
-    app: nginx
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: NodePort
 
-📌 Tipos de Service
+Últimas linhas:
 
-ClusterIP → acesso interno.
+kubectl logs --tail=50 nome-do-pod
 
-NodePort → expõe porta em cada nó.
 
-LoadBalancer → integra com balanceadores externos.
+Tempo real:
 
-📂 Conteúdo 5 — ConfigMaps & Secrets
+kubectl logs -f nome-do-pod
 
-📄 ConfigMap
 
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: app-config
-data:
-  APP_MODE: production
+Container específico no pod:
 
-📄 Secret
+kubectl logs nome-do-pod -c nome-container
 
-apiVersion: v1
-kind: Secret
-metadata:
-  name: db-secret
-stringData:
-  DB_PASSWORD: exemplo123
+🧠 Conteúdo 4 — Exec (igual Docker, mas em Pod)
+Entrar no pod (shell)
+kubectl exec -it nome-do-pod -- sh
 
-📂 Conteúdo 6 — Volumes & Persistent Volumes
 
-📄 PersistentVolumeClaim
+Rodar comando direto:
 
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: pvc-demo
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+kubectl exec nome-do-pod -- ls
+
+
+📌 Observação SRE:
+
+exec → debug rápido
+
+logs → sempre primeiro
+
+🚀 Conteúdo 5 — Deployments
+Listar deployments
+kubectl get deploy
+
+Criar deployment simples
+kubectl create deployment app --image=nginx
+
+Escalar aplicação
+kubectl scale deploy app --replicas=3
+
+Atualizar imagem
+kubectl set image deploy/app nginx=nginx:latest
+
+🔁 Rollout (muito importante)
+Ver status
+kubectl rollout status deploy app
+
+Ver histórico
+kubectl rollout history deploy app
+
+Rollback
+kubectl rollout undo deploy app
+
+
+👉 Isso cai direto em produção.
+
+🌐 Conteúdo 6 — Services (Portas no Kubernetes)
+Listar services
+kubectl get svc
+
+Tipos principais
+
+ClusterIP → acesso interno
+
+NodePort → acesso via porta do node
+
+LoadBalancer → cloud (AWS / GCP / Azure)
+
+Expor deployment
+kubectl expose deploy app --type=NodePort --port=80
 
 📂 Conteúdo 7 — Namespaces
 
-📌 Organização de recursos
+Listar namespaces:
 
-kubectl get namespaces
-kubectl create namespace dev
-kubectl apply -f pod.yaml -n dev
+kubectl get ns
 
-🧹 Conteúdo 8 — kubectl Comandos Essenciais
 
-Ação
+Usar namespace:
 
-Comando Exemplo
+kubectl get pods -n meu-namespace
 
-Listar Pods
 
-kubectl get pods
+👉 Muito comum erro por estar no namespace errado.
 
-Ver detalhes
+🧹 Conteúdo 8 — Limpeza / Debug Rápido
 
-kubectl describe pod meu-pod
+Deletar pod:
 
-Criar recurso
+kubectl delete pod nome-do-pod
 
-kubectl apply -f arquivo.yaml
 
-Deletar recurso
+Deletar deployment:
 
-kubectl delete -f arquivo.yaml
+kubectl delete deploy app
 
-Logs
+📋 Checklist de Incidente Kubernetes (SRE Jr)
+1. kubectl get pods
+2. kubectl describe pod
+3. kubectl logs --tail
+4. kubectl exec (se necessário)
+5. kubectl get deploy / svc
 
-kubectl logs meu-pod
-
-Executar comando
-
-kubectl exec -it meu-pod -- bash
-
-Escalar Deployment
-
-kubectl scale deployment app --replicas=3
-
-📦 Conteúdo 9 — Helm (Gerenciador de Pacotes)
-
-📌 Comandos básicos
-
-helm repo add stable https://charts.helm.sh/stable
-helm install minha-app stable/nginx
-helm list
-helm uninstall minha-app
-
-🧠 Objetivo: servir como cola rápida e base sólida para SRE Jr / DevOps em Kubernetes.
+📌 Mapeamento Docker → Kubernetes (ajuda muito)
+Docker	Kubernetes
+container	pod
+docker logs	kubectl logs
+docker exec	kubectl exec
+docker run	deployment
+docker-compose	manifests / helm
