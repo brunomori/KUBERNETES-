@@ -1,6 +1,5 @@
-# ☸️ Kubernetes – Essencial para Analista SRE Jr
+# ☸️ Kubernetes
 
-Este documento segue **o mesmo estilo de formatação do README de Docker**, usando `###`, `####` e blocos `bash` para manter padrão visual e organização no GitHub.
 
 ---
 
