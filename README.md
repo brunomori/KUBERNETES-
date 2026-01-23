@@ -1,192 +1,213 @@
-📘 Guia Kubernetes para SRE Jr
+# ☸️ Kubernetes – Essencial para Analista SRE Jr
 
-(Em construção — foco total em uso prático no dia a dia)
+Este documento segue **o mesmo estilo de formatação do README de Docker**, usando `###`, `####` e blocos `bash` para manter padrão visual e organização no GitHub.
 
-☸️ Conteúdo 1 — Kubernetes Básico (Sobrevivência)
-📌 O que é Kubernetes
+---
 
-Kubernetes (K8s) é um orquestrador de containers.
-Ele gerencia deploy, escala, restart e comunicação entre containers automaticamente.
+## 📦 Instalação
 
-👉 Docker roda container
-👉 Kubernetes gerencia vários containers em produção
+### Ubuntu / Debian
 
-🧠 Conceitos Fundamentais (ESSENCIAL)
-🔹 Cluster
+```bash
+sudo apt update
+sudo apt install -y apt-transport-https ca-certificates curl
+```
 
-Conjunto de máquinas que rodam Kubernetes.
+```bash
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+```
 
-🔹 Node
+```bash
+echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+```
 
-Máquina (VM ou física) dentro do cluster.
+```bash
+sudo apt update
+sudo apt install -y kubectl
+```
 
-🔹 Pod
+---
 
-Menor unidade do Kubernetes
+## 🧱 Conceitos Básicos
 
-Um pod pode ter 1 ou mais containers
+### Cluster
 
-Containers do mesmo pod compartilham:
+* Conjunto de máquinas que executam containers
 
-rede
+### Node
 
-volume
+* Máquina (VM ou física) dentro do cluster
 
-IP
+### Pod
 
-Container < Pod < Node < Cluster
+* Menor unidade do Kubernetes
+* Pode conter 1 ou mais containers
 
-🔹 Deployment
+### Deployment
 
-Define como os pods devem rodar
+* Gerencia réplicas e atualizações de Pods
 
-Controla:
+### Service
 
-quantidade de réplicas
+* Expõe Pods para rede interna ou externa
 
-atualização
+---
 
-rollback
+## 🚀 Comandos Essenciais
 
-🔹 Service
+### Verificar cluster
 
-Expõe os pods para acesso interno ou externo
-
-Resolve o problema de IP dinâmico dos pods
-
-🛠️ Conteúdo 2 — kubectl (Ferramenta Principal)
-Ver status do cluster
+```bash
 kubectl cluster-info
+```
 
-Ver nodes
+### Listar nodes
+
+```bash
 kubectl get nodes
+```
 
-📦 Conteúdo 3 — Pods
-Listar pods
+### Listar pods
+
+```bash
 kubectl get pods
+```
 
+### Listar pods em todos os namespaces
 
-Todos os namespaces:
-
+```bash
 kubectl get pods -A
+```
 
-Descrever pod (debug)
-kubectl describe pod nome-do-pod
+---
 
+## 📄 Trabalhando com YAML
 
-👉 Muito usado quando pod não sobe.
+### Exemplo de Pod
 
-Logs de pod
-kubectl logs nome-do-pod
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:latest
+```
 
+### Criar recurso
 
-Últimas linhas:
+```bash
+kubectl apply -f pod.yaml
+```
 
-kubectl logs --tail=50 nome-do-pod
+### Remover recurso
 
+```bash
+kubectl delete -f pod.yaml
+```
 
-Tempo real:
+---
 
-kubectl logs -f nome-do-pod
+## 📦 Deployment
 
+### Exemplo de Deployment
 
-Container específico no pod:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+```
 
-kubectl logs nome-do-pod -c nome-container
+### Criar deployment
 
-🧠 Conteúdo 4 — Exec (igual Docker, mas em Pod)
-Entrar no pod (shell)
-kubectl exec -it nome-do-pod -- sh
+```bash
+kubectl apply -f deployment.yaml
+```
 
+---
 
-Rodar comando direto:
+## 🌐 Service
 
-kubectl exec nome-do-pod -- ls
+### Exemplo NodePort
 
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  type: NodePort
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30007
+```
 
-📌 Observação SRE:
+---
 
-exec → debug rápido
+## 📊 Logs e Debug
 
-logs → sempre primeiro
+### Logs de um Pod
 
-🚀 Conteúdo 5 — Deployments
-Listar deployments
-kubectl get deploy
+```bash
+kubectl logs nginx-pod
+```
 
-Criar deployment simples
-kubectl create deployment app --image=nginx
+### Logs em tempo real
 
-Escalar aplicação
-kubectl scale deploy app --replicas=3
+```bash
+kubectl logs -f nginx-pod
+```
 
-Atualizar imagem
-kubectl set image deploy/app nginx=nginx:latest
+### Acessar container
 
-🔁 Rollout (muito importante)
-Ver status
-kubectl rollout status deploy app
+```bash
+kubectl exec -it nginx-pod -- sh
+```
 
-Ver histórico
-kubectl rollout history deploy app
+---
 
-Rollback
-kubectl rollout undo deploy app
+## 🧹 Limpeza
 
+### Deletar pod
 
-👉 Isso cai direto em produção.
+```bash
+kubectl delete pod nginx-pod
+```
 
-🌐 Conteúdo 6 — Services (Portas no Kubernetes)
-Listar services
-kubectl get svc
+### Deletar tudo do namespace atual
 
-Tipos principais
+```bash
+kubectl delete all --all
+```
 
-ClusterIP → acesso interno
+---
 
-NodePort → acesso via porta do node
+## 🎯 O que isso cobre para SRE Jr
 
-LoadBalancer → cloud (AWS / GCP / Azure)
+✔ Conceitos fundamentais
+✔ Leitura de YAML
+✔ Deploy de aplicações
+✔ Debug básico
+✔ Logs
+✔ Networking simples
 
-Expor deployment
-kubectl expose deploy app --type=NodePort --port=80
-
-📂 Conteúdo 7 — Namespaces
-
-Listar namespaces:
-
-kubectl get ns
-
-
-Usar namespace:
-
-kubectl get pods -n meu-namespace
-
-
-👉 Muito comum erro por estar no namespace errado.
-
-🧹 Conteúdo 8 — Limpeza / Debug Rápido
-
-Deletar pod:
-
-kubectl delete pod nome-do-pod
-
-
-Deletar deployment:
-
-kubectl delete deploy app
-
-📋 Checklist de Incidente Kubernetes (SRE Jr)
-1. kubectl get pods
-2. kubectl describe pod
-3. kubectl logs --tail
-4. kubectl exec (se necessário)
-5. kubectl get deploy / svc
-
-📌 Mapeamento Docker → Kubernetes (ajuda muito)
-Docker	Kubernetes
-container	pod
-docker logs	kubectl logs
-docker exec	kubectl exec
-docker run	deployment
-docker-compose	manifests / helm
+👉 Com isso + Docker + Linux, você **tem a base esperada para Analista SRE Jr**.
