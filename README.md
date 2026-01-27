@@ -243,3 +243,219 @@ Você não precisa decorar tudo, mas precisa:
 - **Docker** → Executa containers
 - **Docker Compose** → Orquestra containers em uma máquina
 - **Kubernetes** → Orquestra containers em um cluster
+
+
+# Kubernetes Local com KIND – Guia de Aprendizado
+
+Este README resume, de forma prática, tudo o que foi aprendido até aqui sobre **Kubernetes local usando KIND (Kubernetes IN Docker)**, com **exemplos reais e comandos**.
+
+---
+
+## 📌 Pré-requisitos
+
+* Docker instalado e funcionando
+* kubectl instalado
+* Internet **pode estar bloqueada** (ambiente corporativo)
+
+Verificações básicas:
+
+```
+docker --version
+kubectl version --client
+```
+
+---
+
+## 🚀 Criação do Cluster Kubernetes com KIND
+
+Criamos um cluster Kubernetes local rodando dentro de containers Docker.
+
+```
+kind create cluster
+```
+
+Verificar se o cluster está ativo:
+
+```
+kubectl get nodes
+```
+
+Saída esperada:
+
+```
+kind-control-plane   Ready   control-plane
+```
+
+---
+
+## 🧠 Conceito Importante
+
+* **kubectl** é apenas o cliente
+* **KIND** é quem cria o cluster
+* Kubernetes trabalha com **estado desejado**, não com processos manuais
+
+---
+
+## 📦 Criando um Pod Simples (nginx)
+
+Criamos um Pod manualmente:
+
+```
+kubectl run nginx --image=nginx --port=80
+```
+
+Verificar o status:
+
+```
+kubectl get pods
+```
+
+---
+
+## ❌ Problema Comum: ImagePullBackOff
+
+Erro encontrado:
+
+```
+ImagePullBackOff
+```
+
+Motivo:
+
+* Cluster KIND não consegue acessar o Docker Hub
+* Muito comum em redes corporativas
+
+---
+
+## ✅ Solução: Carregar Imagem Manualmente no KIND
+
+### 1️⃣ Baixar imagem localmente
+
+```
+docker pull nginx
+```
+
+### 2️⃣ Carregar imagem no cluster KIND
+
+```
+kind load docker-image nginx
+```
+
+### 3️⃣ Criar Pod sem puxar da internet
+
+```
+kubectl run nginx \
+  --image=nginx:latest \
+  --port=80 \
+  --image-pull-policy=IfNotPresent
+```
+
+---
+
+## 🌐 Acessando o Pod com Port-Forward
+
+```
+kubectl port-forward pod/nginx 8080:80
+```
+
+Acessar no navegador:
+
+```
+http://localhost:8080
+```
+
+---
+
+## 🧠 Conceitos Aprendidos Até Aqui
+
+* Pod é a menor unidade do Kubernetes
+* Pod sozinho **não é resiliente**
+* Port-forward permite acesso local
+* `latest` força download da imagem
+
+---
+
+## 🚀 Criando um Deployment (Forma Correta)
+
+Deployment garante:
+
+* Auto-healing
+* Escala
+* Controle de versão
+
+### Criar Deployment
+
+```
+kubectl create deployment nginx-deploy --image=nginx:latest
+```
+
+### Ajustar para não puxar imagem da internet
+
+```
+kubectl patch deployment nginx-deploy \
+  -p '{"spec":{"template":{"spec":{"containers":[{"name":"nginx","imagePullPolicy":"IfNotPresent"}]}}}}'
+```
+
+### Escalar para 2 réplicas
+
+```
+kubectl scale deployment nginx-deploy --replicas=2
+```
+
+Ver Pods:
+
+```
+kubectl get pods
+```
+
+---
+
+## ♻️ Auto-healing na Prática
+
+Ao deletar um Pod do Deployment:
+
+```
+kubectl delete pod nginx-deploy-XXXX
+```
+
+O Kubernetes automaticamente cria outro Pod para manter o estado desejado.
+
+Isso prova que:
+
+> Kubernetes não gerencia containers, ele garante estado.
+
+---
+
+## 🧹 Limpeza de Pod Solto (Boa Prática)
+
+Remover Pod criado manualmente:
+
+```
+kubectl delete pod nginx
+```
+
+Manter apenas Pods gerenciados por Deployment.
+
+---
+
+## 🏁 Conclusão
+
+Até aqui foi possível aprender:
+
+* Criar cluster Kubernetes local
+* Entender Pods e Deployments
+* Resolver problemas reais de imagem
+* Aplicar conceitos usados em ambientes corporativos
+* Ver o Kubernetes se auto-recuperar
+
+Este é o **fundamento real** do Kubernetes.
+
+---
+
+📚 Próximos passos sugeridos:
+
+* YAML na prática
+* Services (ClusterIP, NodePort)
+* ConfigMap e Secrets
+* Debug de falhas (CrashLoopBackOff)
+* Mini-projeto completo
