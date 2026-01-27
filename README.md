@@ -71,6 +71,31 @@ kubectl get services
 
 ```bash
 kubectl describe pod <pod>
+
+Principais informações importantes
+
+Name / Namespace → Identificação do Pod
+
+Status → Estado atual (Running, Pending, CrashLoopBackOff, etc)
+
+Node → Node onde o Pod está rodando
+
+IP → IP interno do Pod no cluster
+
+Controlled By → Quem gerencia o Pod (normalmente um ReplicaSet de um Deployment)
+
+Image → Imagem Docker usada pelo container
+
+Ready → Indica se o container está pronto para receber tráfego
+
+Restart Count → Quantas vezes o container reiniciou
+
+Labels → Usadas por Services e Deployments para seleção
+
+Conditions → Saúde geral do Pod (tudo True = OK)
+
+Events → Logs de erro e problemas do Kubernetes
+
 kubectl delete pod <pod>
 ```
 
