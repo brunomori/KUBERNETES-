@@ -126,6 +126,11 @@ kubectl create secret generic app-secret --from-literal=PASSWORD=123
 
 ## 📜 Logs e Debug
 
+### Tudo sobre o POD 
+```bash
+k get pod <nome do pod> -o yaml
+```
+
 ### Ver logs do Pod
 ```bash
 kubectl logs <pod>
